@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#0a0a0f; --paper:#f5f3ee; --cream:#ede9e0; --accent:#d4431c;
+    --accent2:#1c5fd4; --gold:#c9a84c; --muted:#888880; --border:#ddd9cf;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--paper);min-height:100vh;display:grid;grid-template-columns:1fr 1fr;cursor:none;}
+  .cursor{position:fixed;width:10px;height:10px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+  .cursor-ring{position:fixed;width:32px;height:32px;border:1.5px solid rgba(255,255,255,.3);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .1s ease;}
+
+  /* Left panel */
+  .left-panel{background:var(--accent2);padding:3rem;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+  .left-panel::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(-45deg,transparent,transparent 30px,rgba(255,255,255,.04) 30px,rgba(255,255,255,.04) 31px);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.1em;color:white;text-decoration:none;}
+  .logo span{color:rgba(255,255,255,.4);}
+  .brand-tagline{font-size:.8rem;color:rgba(255,255,255,.6);margin-top:.3rem;font-family:'Space Mono',monospace;letter-spacing:.1em;}
+  .hero-text{position:relative;z-index:1;}
+  .hero-text h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,5.5vw,5rem);line-height:.92;color:white;margin-bottom:1.5rem;}
+  .hero-text h1 em{font-style:normal;color:rgba(255,255,255,.3);display:block;}
+  .hero-text p{font-size:.9rem;color:rgba(255,255,255,.7);line-height:1.7;font-weight:300;max-width:340px;}
+  .steps{position:relative;z-index:1;display:flex;flex-direction:column;gap:.8rem;}
+  .step{display:flex;align-items:center;gap:.8rem;font-size:.82rem;color:rgba(255,255,255,.7);}
+  .step-num{width:24px;height:24px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.65rem;color:white;flex-shrink:0;}
+
+  /* Right form */
+  .right-panel{background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:2.5rem;overflow-y:auto;}
+  .form-wrap{width:100%;max-width:420px;}
+  .form-header{margin-bottom:2rem;}
+  .form-eyebrow{font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+  .form-eyebrow::before{content:'';display:block;width:20px;height:1.5px;background:var(--accent2);}
+  .form-header h2{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;letter-spacing:.02em;}
+  .form-header p{font-size:.85rem;color:var(--muted);margin-top:.5rem;}
+
+  .form-group{margin-bottom:1rem;}
+  .form-group label{display:block;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem;}
+  .form-group input,.form-group select{width:100%;padding:.75rem 1rem;background:var(--cream);border:1.5px solid var(--border);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:.9rem;border-radius:2px;outline:none;transition:border-color .2s;cursor:none;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--ink);}
+  .form-group input.error{border-color:var(--accent);}
+  .input-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+  .error-msg{color:var(--accent);font-size:.72rem;font-family:'Space Mono',monospace;margin-top:.25rem;display:none;}
+
+  /* Password strength */
+  .pw-strength{height:3px;border-radius:2px;margin-top:.4rem;background:var(--border);overflow:hidden;}
+  .pw-strength-bar{height:100%;width:0;transition:width .3s,background .3s;border-radius:2px;}
+
+  /* Terms */
+  .terms-row{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:1.2rem;font-size:.8rem;color:var(--muted);cursor:none;}
+  .terms-row input{margin-top:2px;accent-color:var(--accent);cursor:none;}
+  .terms-row a{color:var(--ink);font-weight:500;}
+
+  .btn-submit{width:100%;padding:.9rem;background:var(--ink);color:var(--paper);border:none;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:none;border-radius:2px;transition:background .2s,transform .15s;}
+  .btn-submit:hover{background:var(--accent2);transform:translateY(-1px);}
+  .alt-link{text-align:center;font-size:.82rem;color:var(--muted);margin-top:1rem;}
+  .alt-link a{color:var(--ink);font-weight:500;text-decoration:none;border-bottom:1px solid var(--ink);}
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--ink);color:var(--paper);padding:.8rem 1.5rem;border-radius:3px;font-size:.82rem;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:var(--accent);}
+  .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:.5rem;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .fade-in{animation:fadeIn .5s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  @media(max-width:768px){body{grid-template-columns:1fr;}.left-panel{display:none;}}
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="toast" id="toast"></div>
+
+<div class="left-panel">
+  <div>
+    <a href="login.html" class="logo">NEX<span>US</span></a>
+    <div class="brand-tagline">Campus Event Portal</div>
+  </div>
+  <div class="hero-text">
+    <h1>Join<br>The<br><em>Community</em></h1>
+    <p>Register once, access everything. From hackathons to cultural fests — your campus life starts here.</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>Create your student profile</div>
+    <div class="step"><div class="step-num">2</div>Browse and register for events</div>
+    <div class="step"><div class="step-num">3</div>Track your schedule and history</div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="form-wrap fade-in">
+    <div class="form-header">
+      <div class="form-eyebrow">New Account</div>
+      <h2>Create Your<br>Profile</h2>
+      <p>Already have an account? <a href="login.html" style="color:var(--accent2);font-weight:500;text-decoration:none;border-bottom:1px solid var(--accent2)">Sign in →</a></p>
+    </div>
+
+    <div class="input-row">
+      <div class="form-group"><label>First Name</label><input type="text" id="firstName" placeholder="Jane"><div class="error-msg" id="fnErr">Required</div></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="lastName" placeholder="Doe"><div class="error-msg" id="lnErr">Required</div></div>
+    </div>
+    <div class="form-group"><label>Student ID</label><input type="text" id="studentId" placeholder="STU2026XXXXX"><div class="error-msg" id="sidErr">Required</div></div>
+    <div class="form-group"><label>University Email</label><input type="email" id="email" placeholder="jane.doe@university.edu"><div class="error-msg" id="emailErr">Valid university email required</div></div>
+    <div class="form-group">
+      <label>Department</label>
+      <select id="department">
+        <option value="">Select your department</option>
+        <option>Computer Science</option>
+        <option>Engineering</option>
+        <option>Biology & Life Sciences</option>
+        <option>Physics</option>
+        <option>Mathematics</option>
+        <option>Arts & Humanities</option>
+        <option>Business</option>
+        <option>Social Sciences</option>
+        <option>Medicine</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Min. 6 characters" oninput="checkPwStrength(this.value)">
+      <div class="pw-strength"><div class="pw-strength-bar" id="pwBar"></div></div>
+      <div class="error-msg" id="pwErr">Min. 6 characters</div>
+    </div>
+    <div class="form-group"><label>Confirm Password</label><input type="password" id="confirmPw" placeholder="Repeat password"><div class="error-msg" id="cpwErr">Passwords do not match</div></div>
+
+    <div class="terms-row">
+      <input type="checkbox" id="terms">
+      <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+    </div>
+    <div class="error-msg" id="termsErr" style="margin-bottom:.7rem">Please accept the terms to continue.</div>
+
+    <button class="btn-submit" id="signupBtn" onclick="handleSignup()">Create Account →</button>
+    <div class="alt-link">Already have an account? <a href="login.html">Sign in</a></div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX+'px'; cursor.style.top = e.clientY+'px';
+    setTimeout(()=>{ ring.style.left = e.clientX+'px'; ring.style.top = e.clientY+'px'; },60);
+  });
+
+  function showToast(msg, type='success'){
+    const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`;
+    setTimeout(()=>t.classList.remove('show'),3000);
+  }
+
+  function checkPwStrength(val){
+    const bar=document.getElementById('pwBar');
+    if(!val){bar.style.width='0';return;}
+    let score=0;
+    if(val.length>=6) score++;
+    if(val.length>=10) score++;
+    if(/[A-Z]/.test(val)) score++;
+    if(/[0-9]/.test(val)) score++;
+    if(/[^A-Za-z0-9]/.test(val)) score++;
+    const pcts=['0%','25%','45%','65%','85%','100%'];
+    const colors=['','#c41c1c','#d4431c','var(--gold)','#1c9e5f','#1c9e5f'];
+    bar.style.width=pcts[score]; bar.style.background=colors[score];
+  }
+
+  function clearErrors(){
+    ['fnErr','lnErr','sidErr','emailErr','pwErr','cpwErr','termsErr'].forEach(id=>{
+      document.getElementById(id).style.display='none';
+    });
+  }
+
+  function handleSignup(){
+    clearErrors();
+    const fn=document.getElementById('firstName').value.trim();
+    const ln=document.getElementById('lastName').value.trim();
+    const sid=document.getElementById('studentId').value.trim();
+    const email=document.getElementById('email').value.trim();
+    const dept=document.getElementById('department').value;
+    const pw=document.getElementById('password').value;
+    const cpw=document.getElementById('confirmPw').value;
+    const terms=document.getElementById('terms').checked;
+    let ok=true;
+
+    if(!fn){document.getElementById('fnErr').style.display='block';ok=false;}
+    if(!ln){document.getElementById('lnErr').style.display='block';ok=false;}
+    if(!sid){document.getElementById('sidErr').style.display='block';ok=false;}
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('emailErr').style.display='block';ok=false;}
+    if(!pw||pw.length<6){document.getElementById('pwErr').style.display='block';ok=false;}
+    if(pw!==cpw){document.getElementById('cpwErr').style.display='block';ok=false;}
+    if(!terms){document.getElementById('termsErr').style.display='block';ok=false;}
+    if(!ok) return;
+
+    const btn=document.getElementById('signupBtn');
+    btn.innerHTML='<span class="spinner"></span> Creating account...';
+    btn.disabled=true;
+
+    setTimeout(()=>{
+      const result=Auth.signup({firstName:fn,lastName:ln,studentId:sid,email,department:dept,password:pw});
+      if(result.success){
+        showToast('Account created! Redirecting to dashboard...');
+        setTimeout(()=>{ window.location.href='user-dashboard.html'; },1000);
+      } else {
+        showToast(result.error,'error');
+        btn.innerHTML='Create Account →'; btn.disabled=false;
+      }
+    },900);
+  }
+</script>
+</body>
+</html>
