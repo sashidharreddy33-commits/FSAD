@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0a0a0f;--paper:#f5f3ee;--cream:#ede9e0;--accent:#d4431c;--accent2:#1c5fd4;--gold:#c9a84c;--muted:#888880;--card-bg:#fff;--border:#ddd9cf;--sidebar:260px;--success:#1c9e5f;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--paper);display:flex;min-height:100vh;cursor:none;}
+  .cursor{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+  .cursor-ring{position:fixed;width:30px;height:30px;border:1.5px solid rgba(201,168,76,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .1s ease;}
+
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  .sidebar{width:var(--sidebar);background:#08080c;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:50;}
+  .sidebar-brand{padding:1.8rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.06);}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.1em;color:white;text-decoration:none;}
+  .logo-sub{font-family:'Space Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-top:.2rem;}
+  .sidebar-user{padding:1.2rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:.8rem;}
+  .admin-avatar{width:36px;height:36px;border-radius:3px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--ink);}
+  .user-name{font-size:.88rem;font-weight:500;}
+  .user-role{font-size:.62rem;color:var(--gold);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+
+  .nav-section{padding:.8rem 0;}
+  .nav-label{padding:.4rem 1.5rem;font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.25);}
+  .nav-item{display:flex;align-items:center;gap:.7rem;padding:.65rem 1.5rem;font-size:.85rem;color:rgba(255,255,255,.5);text-decoration:none;transition:all .2s;cursor:none;border-left:2.5px solid transparent;}
+  .nav-item:hover{color:white;background:rgba(255,255,255,.04);}
+  .nav-item.active{color:white;background:rgba(201,168,76,.12);border-left-color:var(--gold);}
+  .nav-item .icon{font-size:.9rem;width:20px;text-align:center;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:.58rem;padding:.15rem .45rem;border-radius:10px;font-family:'Space Mono',monospace;}
+  .sidebar-footer{margin-top:auto;padding:1.5rem;border-top:1px solid rgba(255,255,255,.06);}
+  .btn-logout{width:100%;padding:.6rem;background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:none;transition:all .2s;text-align:left;display:flex;align-items:center;gap:.5rem;}
+  .btn-logout:hover{color:white;border-color:rgba(255,255,255,.3);}
+
+  /* ── Main ────────────────────────────────────────────────────────────── */
+  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;background:#0f0f17;}
+
+  /* Topbar */
+  .topbar{background:#08080c;border-bottom:1px solid rgba(255,255,255,.06);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+  .page-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.03em;color:white;}
+  .topbar-right{display:flex;align-items:center;gap:.8rem;}
+  .btn-add{background:var(--gold);color:var(--ink);border:none;padding:.55rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:none;border-radius:2px;transition:opacity .2s;}
+  .btn-add:hover{opacity:.85;}
+
+  /* Content */
+  .content{padding:2rem;flex:1;color:var(--paper);}
+
+  /* Stats row */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+  .stat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:1.5rem;transition:border-color .2s;}
+  .stat-card:hover{border-color:rgba(255,255,255,.15);}
+  .stat-card-top{display:flex;align-items:flex-start;justify-content:space-between;}
+  .stat-num{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:.02em;color:white;}
+  .stat-label{font-size:.68rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem;}
+  .stat-icon{font-size:1.4rem;opacity:.6;}
+  .stat-trend{font-size:.72rem;color:var(--success);margin-top:.5rem;}
+
+  /* Section header */
+  .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+  .section-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.02em;color:white;}
+  .btn-sm{padding:.4rem 1rem;font-size:.68rem;font-family:'Space Mono',monospace;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);border-radius:2px;cursor:none;transition:all .2s;}
+  .btn-sm:hover,.btn-sm.active{background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.3);}
+  .btn-danger{border-color:rgba(212,67,28,.4);color:var(--accent);}
+  .btn-danger:hover{background:rgba(212,67,28,.15);color:var(--accent);}
+
+  /* Tables */
+  .data-table{width:100%;border-collapse:separate;border-spacing:0 1px;margin-bottom:2rem;}
+  .data-table th{font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:.7rem 1rem;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);}
+  .data-table td{background:rgba(255,255,255,.03);padding:.85rem 1rem;font-size:.85rem;color:rgba(255,255,255,.8);border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+  .data-table tr:hover td{background:rgba(255,255,255,.06);}
+  .data-table td:first-child{border-left:2px solid transparent;}
+  .data-table tr:hover td:first-child{border-left-color:var(--gold);}
+
+  /* Badges */
+  .badge{display:inline-block;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;padding:.22rem .65rem;border-radius:2px;font-family:'Space Mono',monospace;}
+  .badge-confirmed{background:rgba(28,158,95,.15);color:#1c9e5f;}
+  .badge-waitlist{background:rgba(184,134,11,.15);color:#b8860b;}
+  .badge-pending{background:rgba(124,28,212,.15);color:#7c1cd4;}
+  .badge-cancelled{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);}
+  .tag-badge{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;border-radius:2px;font-family:'Space Mono',monospace;}
+  .tag-tech{background:rgba(28,95,212,.2);color:#6a9ef5;}
+  .tag-art{background:rgba(212,67,28,.2);color:#f5936a;}
+  .tag-science{background:rgba(28,158,95,.2);color:#6af5b0;}
+  .tag-social{background:rgba(184,134,11,.2);color:#f5d06a;}
+  .tag-sports{background:rgba(124,28,212,.2);color:#c06af5;}
+  .tag-workshop{background:rgba(196,28,28,.2);color:#f56a6a;}
+
+  /* Chart bars */
+  .mini-chart{display:flex;align-items:flex-end;gap:4px;height:50px;margin-top:.5rem;}
+  .chart-bar{flex:1;background:var(--gold);border-radius:2px 2px 0 0;opacity:.7;transition:opacity .2s;}
+  .chart-bar:hover{opacity:1;}
+
+  /* Event cards for admin */
+  .events-list{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:2rem;}
+  .event-row{display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;background:#0f0f17;transition:background .2s;border-bottom:1px solid rgba(255,255,255,.04);}
+  .event-row:hover{background:rgba(255,255,255,.04);}
+  .event-row-title{flex:1;font-weight:500;font-size:.9rem;}
+  .event-row-meta{font-size:.72rem;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;margin-top:.15rem;}
+  .progress-bar-wrap{width:80px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;}
+  .progress-bar{height:100%;background:var(--gold);border-radius:3px;transition:width .4s;}
+  .action-btns{display:flex;gap:.4rem;}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:200;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;pointer-events:none;transition:opacity .3s;}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:#0f0f17;border:1px solid rgba(255,255,255,.12);width:100%;max-width:540px;border-radius:4px;overflow:hidden;transform:translateY(20px);transition:transform .3s;box-shadow:0 40px 100px rgba(0,0,0,.6);}
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-head{background:#08080c;padding:1.8rem 2rem;position:relative;border-bottom:1px solid rgba(255,255,255,.08);}
+  .modal-head h3{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:.02em;color:white;}
+  .modal-head p{font-size:.8rem;color:rgba(255,255,255,.4);margin-top:.2rem;}
+  .modal-close{position:absolute;top:1.3rem;right:1.3rem;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);width:30px;height:30px;border-radius:50%;cursor:none;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .modal-close:hover{background:var(--accent);color:white;}
+  .modal-body{padding:1.8rem 2rem;}
+  .mform-group{margin-bottom:1rem;}
+  .mform-group label{display:block;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:.35rem;}
+  .mform-group input,.mform-group select,.mform-group textarea{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:white;font-family:'DM Sans',sans-serif;font-size:.88rem;border-radius:2px;outline:none;transition:border-color .2s;cursor:none;}
+  .mform-group input:focus,.mform-group select:focus,.mform-group textarea:focus{border-color:var(--gold);}
+  .mform-group select option{background:#0f0f17;}
+  .mform-group textarea{min-height:80px;resize:vertical;}
+  .mform-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+  .btn-submit-modal{width:100%;padding:.85rem;background:var(--gold);color:var(--ink);border:none;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:none;border-radius:2px;transition:opacity .2s;margin-top:.5rem;}
+  .btn-submit-modal:hover{opacity:.85;}
+
+  /* Toast */
+  .toast{position:fixed;bottom:2rem;right:2rem;background:var(--gold);color:var(--ink);padding:.8rem 1.5rem;border-radius:3px;font-size:.82rem;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;font-weight:600;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:var(--accent);color:white;}
+  .toast.info{background:var(--accent2);color:white;font-weight:400;}
+
+  @media(max-width:900px){.sidebar{transform:translateX(-100%);}.main{margin-left:0;}.stats-row{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <a href="#" class="logo">NEXUS</a>
+    <div class="logo-sub">Admin Console</div>
+  </div>
+  <div class="sidebar-user">
+    <div class="admin-avatar" id="adminAvatar">AD</div>
+    <div>
+      <div class="user-name" id="adminName">Admin</div>
+      <div class="user-role">Administrator</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <a href="#" class="nav-item active" onclick="showSection('overview',this)"><span class="icon">📊</span> Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Management</div>
+      <a href="#" class="nav-item" onclick="showSection('events',this)"><span class="icon">📅</span> Manage Events</a>
+      <a href="#" class="nav-item" onclick="showSection('registrations',this)"><span class="icon">🎫</span> Registrations <span class="nav-badge" id="totalRegBadge">0</span></a>
+      <a href="#" class="nav-item" onclick="showSection('students',this)"><span class="icon">👥</span> Students</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="Auth.logout()">⬅ Sign Out</button>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Dashboard</div>
+    <div class="topbar-right">
+      <button class="btn-add" onclick="openAddEventModal()" id="addEventBtn" style="display:none">+ New Event</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────────────── -->
+    <div id="sec-overview">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-top"><div><div class="stat-num" id="statEvents">0</div><div class="stat-label">Total Events</div></div><div class="stat-icon">📅</div></div>
+          <div class="stat-trend">↑ Active this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div><div class="stat-num" id="statRegs">0</div><div class="stat-label">Confirmed Regs</div></div><div class="stat-icon">✅</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div><div class="stat-num" id="statStudents">0</div><div class="stat-label">Students</div></div><div class="stat-icon">🎓</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div><div class="stat-num" id="statWaitlist">0</div><div class="stat-label">Waitlisted</div></div><div class="stat-icon">⏳</div></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+        <!-- Category breakdown -->
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:1.5rem;">
+          <div style="font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:1.2rem;">Events by Category</div>
+          <div id="categoryBreakdown"></div>
+        </div>
+        <!-- Top event -->
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px;padding:1.5rem;">
+          <div style="font-family:'Space Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:1.2rem;">Most Popular Event</div>
+          <div id="topEventCard"></div>
+        </div>
+      </div>
+
+      <div class="section-hdr"><h3>Recent Registrations</h3></div>
+      <table class="data-table" id="recentRegsTable">
+        <thead><tr><th>#</th><th>Student</th><th>Event</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="recentRegsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ── EVENTS ─────────────────────────────────────────────────────── -->
+    <div id="sec-events" style="display:none">
+      <div class="section-hdr">
+        <h3>All Events</h3>
+        <button class="btn-add" onclick="openAddEventModal()" style="background:var(--gold);color:var(--ink);border:none;padding:.5rem 1.2rem;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:none;border-radius:2px;">+ Add Event</button>
+      </div>
+      <div class="events-list" id="adminEventsList"></div>
+    </div>
+
+    <!-- ── REGISTRATIONS ──────────────────────────────────────────────── -->
+    <div id="sec-registrations" style="display:none">
+      <div class="section-hdr"><h3>All Registrations</h3></div>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Student</th><th>Event</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="allRegsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ── STUDENTS ───────────────────────────────────────────────────── -->
+    <div id="sec-students" style="display:none">
+      <div class="section-hdr"><h3>Registered Students</h3></div>
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Name</th><th>Student ID</th><th>Email</th><th>Department</th><th>Registrations</th></tr></thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add/Edit Event Modal -->
+<div class="modal-overlay" id="eventModalOverlay" onclick="if(event.target===this)closeEventModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="eventModalTitle">Add New Event</h3>
+      <p>Fill in the details for the event</p>
+      <button class="modal-close" onclick="closeEventModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editEventId">
+      <div class="mform-row" style="margin-bottom:1rem;">
+        <div class="mform-group" style="grid-column:1/-1;"><label>Event Title</label><input type="text" id="evTitle" placeholder="e.g. Annual Hackathon 2026"></div>
+      </div>
+      <div class="mform-row">
+        <div class="mform-group"><label>Date</label><input type="date" id="evDate"></div>
+        <div class="mform-group"><label>Time</label><input type="time" id="evTime"></div>
+      </div>
+      <div class="mform-row">
+        <div class="mform-group">
+          <label>Category</label>
+          <select id="evTag">
+            <option value="tech">Technology</option><option value="science">Science</option>
+            <option value="art">Arts & Culture</option><option value="social">Social</option>
+            <option value="sports">Sports</option><option value="workshop">Workshop</option>
+          </select>
+        </div>
+        <div class="mform-group"><label>Capacity</label><input type="number" id="evCapacity" placeholder="50" min="1"></div>
+      </div>
+      <div class="mform-group"><label>Venue</label><input type="text" id="evVenue" placeholder="e.g. Engineering Hall A"></div>
+      <div class="mform-group"><label>Description</label><textarea id="evDesc" placeholder="Event description..."></textarea></div>
+      <button class="btn-submit-modal" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script>
+// ── Auth guard ─────────────────────────────────────────────────────────────────
+const session = Auth.requireAuth('admin');
+if (!session) throw new Error('Auth redirect');
+
+// ── Cursor ────────────────────────────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX+'px'; cursor.style.top = e.clientY+'px';
+  setTimeout(()=>{ ring.style.left = e.clientX+'px'; ring.style.top = e.clientY+'px'; },60);
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('adminName').textContent   = session.firstName+' '+session.lastName;
+document.getElementById('adminAvatar').textContent = session.firstName[0]+session.lastName[0];
+
+function showToast(msg, type='success'){
+  const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Section switching ─────────────────────────────────────────────────────────
+const sections = ['overview','events','registrations','students'];
+function showSection(name, linkEl) {
+  sections.forEach(s => document.getElementById('sec-'+s).style.display = s===name?'block':'none');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (linkEl) linkEl.classList.add('active');
+  const titles = {overview:'Dashboard',events:'Manage Events',registrations:'Registrations',students:'Students'};
+  document.getElementById('pageTitle').textContent = titles[name]||name;
+  if (name==='events') renderAdminEvents();
+  if (name==='registrations') renderAllRegs();
+  if (name==='students') renderStudents();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function loadStats() {
+  const stats = NexusData.getStats();
+  document.getElementById('statEvents').textContent   = stats.upcomingEvents;
+  document.getElementById('statRegs').textContent     = stats.totalRegs;
+  document.getElementById('statStudents').textContent = stats.totalStudents;
+  document.getElementById('statWaitlist').textContent = stats.waitlisted;
+  document.getElementById('totalRegBadge').textContent = stats.totalRegs;
+
+  // Category breakdown
+  const tagLabels = {tech:'Technology',art:'Arts',science:'Science',social:'Social',sports:'Sports',workshop:'Workshop'};
+  const maxCount  = Math.max(...Object.values(stats.byTag));
+  document.getElementById('categoryBreakdown').innerHTML = Object.entries(stats.byTag).map(([tag,count]) => `
+    <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem;">
+      <div style="width:70px;font-family:'Space Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.4);">${tagLabels[tag]||tag}</div>
+      <div style="flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;">
+        <div style="width:${(count/maxCount)*100}%;height:100%;background:var(--gold);border-radius:3px;"></div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.5);">${count}</div>
+    </div>`).join('');
+
+  // Top event
+  if (stats.topEvent) {
+    document.getElementById('topEventCard').innerHTML = `
+      <div style="font-size:1rem;font-weight:600;margin-bottom:.4rem;">${stats.topEvent.title}</div>
+      <div style="font-size:.75rem;color:rgba(255,255,255,.4);font-family:'Space Mono',monospace;">${stats.topEvent.date} · ${stats.topEvent.venue}</div>
+      <div style="margin-top:.8rem;font-size:.8rem;color:var(--gold);">Most registrations this semester</div>`;
+  }
+
+  // Recent registrations
+  const allRegs = NexusData.getAllRegistrations().slice(-8).reverse();
+  const users   = JSON.parse(localStorage.getItem('nexus_users')||'[]');
+  const tbody   = document.getElementById('recentRegsBody');
+  tbody.innerHTML = allRegs.map((r,i) => {
+    const user = users.find(u => u.id === r.studentId) || {};
+    const ev   = NexusData.getEventById(r.eventId);
+    return `<tr>
+      <td style="color:rgba(255,255,255,.25);font-family:'Space Mono',monospace;font-size:.72rem;">${String(i+1).padStart(2,'0')}</td>
+      <td>${user.firstName||'?'} ${user.lastName||''}</td>
+      <td style="color:rgba(255,255,255,.6);">${ev?ev.title:'General'}</td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td style="font-size:.75rem;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;">${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.2);font-style:italic;">No registrations yet.</td></tr>';
+}
+
+// ── Admin Events list ─────────────────────────────────────────────────────────
+function renderAdminEvents() {
+  const events = NexusData.getEvents();
+  const list   = document.getElementById('adminEventsList');
+  list.innerHTML = events.map(ev => {
+    const regs  = NexusData.getEventRegistrations(ev.id).filter(r=>r.status==='confirmed').length;
+    const pct   = Math.round((regs/ev.capacity)*100);
+    const tagLabels = {tech:'Technology',art:'Arts',science:'Science',social:'Social',sports:'Sports',workshop:'Workshop'};
+    return `
+    <div class="event-row">
+      <div style="flex:1;">
+        <div class="event-row-title">${ev.title}</div>
+        <div class="event-row-meta">📅 ${ev.date} · ${ev.time} · 📍 ${ev.venue}</div>
+      </div>
+      <span class="tag-badge tag-${ev.tag}" style="margin-right:.5rem;">${tagLabels[ev.tag]||ev.tag}</span>
+      <div style="margin-right:1rem;text-align:right;">
+        <div style="font-family:'Space Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.4);">${regs}/${ev.capacity}</div>
+        <div class="progress-bar-wrap" style="margin-top:.3rem;"><div class="progress-bar" style="width:${pct}%"></div></div>
+      </div>
+      <div class="action-btns">
+        <button class="btn-sm" onclick="openEditEventModal(${ev.id})">Edit</button>
+        <button class="btn-sm btn-danger" onclick="confirmDeleteEvent(${ev.id})">Del</button>
+      </div>
+    </div>`;
+  }).join('') || '<div style="padding:2rem;text-align:center;color:rgba(255,255,255,.2);font-style:italic;">No events yet.</div>';
+}
+
+// ── All Registrations ─────────────────────────────────────────────────────────
+function renderAllRegs() {
+  const regs  = NexusData.getAllRegistrations().reverse();
+  const users = JSON.parse(localStorage.getItem('nexus_users')||'[]');
+  const tbody = document.getElementById('allRegsBody');
+  tbody.innerHTML = regs.map((r,i) => {
+    const user = users.find(u=>u.id===r.studentId)||{};
+    const ev   = NexusData.getEventById(r.eventId);
+    return `<tr>
+      <td style="color:rgba(255,255,255,.25);font-family:'Space Mono',monospace;font-size:.72rem;">${String(i+1).padStart(2,'0')}</td>
+      <td>${user.firstName||'?'} ${user.lastName||''}</td>
+      <td style="color:rgba(255,255,255,.6);">${ev?ev.title:'General'}</td>
+      <td><span class="badge badge-${r.status}">${r.status}</span></td>
+      <td style="font-size:.75rem;color:rgba(255,255,255,.35);font-family:'Space Mono',monospace;">${r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '—'}</td>
+      <td>
+        ${r.status !== 'cancelled'
+          ? `<button class="btn-sm btn-danger" onclick="adminCancel(${r.id})">Cancel</button>`
+          : '—'}
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.2);font-style:italic;">No registrations.</td></tr>';
+}
+
+function adminCancel(regId) {
+  if (!confirm('Cancel this registration?')) return;
+  NexusData.cancelRegistration(regId);
+  showToast('Registration cancelled.','info');
+  renderAllRegs();
+  loadStats();
+}
+
+// ── Students ──────────────────────────────────────────────────────────────────
+function renderStudents() {
+  const users = JSON.parse(localStorage.getItem('nexus_users')||'[]').filter(u=>u.role==='student');
+  const tbody = document.getElementById('studentsBody');
+  tbody.innerHTML = users.map((u,i) => {
+    const regCount = NexusData.getRegistrations(u.id).filter(r=>r.status==='confirmed').length;
+    return `<tr>
+      <td style="color:rgba(255,255,255,.25);font-family:'Space Mono',monospace;font-size:.72rem;">${String(i+1).padStart(2,'0')}</td>
+      <td style="font-weight:500;">${u.firstName} ${u.lastName}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.78rem;color:rgba(255,255,255,.5);">${u.studentId}</td>
+      <td style="font-size:.8rem;color:rgba(255,255,255,.5);">${u.email}</td>
+      <td>${u.department||'—'}</td>
+      <td><span style="font-family:'Space Mono',monospace;font-size:.75rem;color:var(--gold);">${regCount}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.2);font-style:italic;">No students yet.</td></tr>';
+}
+
+// ── Add/Edit Event Modal ──────────────────────────────────────────────────────
+function openAddEventModal() {
+  document.getElementById('eventModalTitle').textContent = 'Add New Event';
+  document.getElementById('editEventId').value = '';
+  ['evTitle','evDate','evTime','evVenue','evDesc','evCapacity'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('evTag').value='tech';
+  document.getElementById('eventModalOverlay').classList.add('open');
+}
+
+function openEditEventModal(id) {
+  const ev = NexusData.getEventById(id);
+  if (!ev) return;
+  document.getElementById('eventModalTitle').textContent = 'Edit Event';
+  document.getElementById('editEventId').value = id;
+  document.getElementById('evTitle').value    = ev.title;
+  document.getElementById('evDate').value     = ev.isoDate;
+  document.getElementById('evTime').value     = ev.time.replace(' AM','').replace(' PM','');
+  document.getElementById('evTag').value      = ev.tag;
+  document.getElementById('evCapacity').value = ev.capacity;
+  document.getElementById('evVenue').value    = ev.venue;
+  document.getElementById('evDesc').value     = ev.description;
+  document.getElementById('eventModalOverlay').classList.add('open');
+}
+
+function closeEventModal() { document.getElementById('eventModalOverlay').classList.remove('open'); }
+
+function saveEvent() {
+  const id       = document.getElementById('editEventId').value;
+  const title    = document.getElementById('evTitle').value.trim();
+  const isoDate  = document.getElementById('evDate').value;
+  const time     = document.getElementById('evTime').value;
+  const tag      = document.getElementById('evTag').value;
+  const capacity = parseInt(document.getElementById('evCapacity').value)||50;
+  const venue    = document.getElementById('evVenue').value.trim();
+  const desc     = document.getElementById('evDesc').value.trim();
+
+  if (!title || !isoDate || !venue) { showToast('Title, date, and venue are required.','error'); return; }
+
+  const d = new Date(isoDate);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = months[d.getMonth()]+' '+d.getDate();
+  const [h,m]   = time.split(':');
+  const hour    = parseInt(h);
+  const timeStr = `${hour>12?hour-12:hour||12}:${m} ${hour>=12?'PM':'AM'}`;
+
+  const data = { title, isoDate, date:dateStr, time:timeStr, tag, capacity, venue, description:desc, spots:capacity };
+
+  if (id) {
+    NexusData.updateEvent(parseInt(id), data);
+    showToast('Event updated!');
+  } else {
+    NexusData.addEvent(data);
+    showToast('Event created!');
+  }
+
+  closeEventModal();
+  renderAdminEvents();
+  loadStats();
+}
+
+function confirmDeleteEvent(id) {
+  const ev = NexusData.getEventById(id);
+  if (!confirm(`Delete "${ev?.title}"? This cannot be undone.`)) return;
+  NexusData.deleteEvent(id);
+  showToast('Event deleted.','info');
+  renderAdminEvents();
+  loadStats();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadStats();
+</script>
+</body>
+</html>

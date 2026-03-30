@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f3ee;
+    --cream: #ede9e0;
+    --accent: #d4431c;
+    --accent2: #1c5fd4;
+    --gold: #c9a84c;
+    --muted: #888880;
+    --border: #ddd9cf;
+    --success: #1c9e5f;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    cursor: none;
+  }
+
+  /* Cursor */
+  .cursor { position:fixed; width:10px; height:10px; background:var(--accent); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); transition:width .2s,height .2s; }
+  .cursor-ring { position:fixed; width:32px; height:32px; border:1.5px solid rgba(255,255,255,.3); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:all .1s ease; }
+
+  /* Left panel */
+  .left-panel {
+    background: var(--accent);
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.04) 30px, rgba(255,255,255,0.04) 31px);
+  }
+  .brand { position:relative; z-index:1; }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:.1em; color:white; text-decoration:none; }
+  .logo span { color:rgba(255,255,255,.4); }
+  .brand-tagline { font-size:.8rem; color:rgba(255,255,255,.6); margin-top:.3rem; font-family:'Space Mono',monospace; letter-spacing:.1em; }
+
+  .hero-text { position:relative; z-index:1; }
+  .hero-text h1 {
+    font-family:'Bebas Neue',sans-serif;
+    font-size: clamp(3.5rem, 6vw, 5.5rem);
+    line-height:.92;
+    color: white;
+    margin-bottom:1.5rem;
+  }
+  .hero-text h1 em { font-style:normal; color:rgba(255,255,255,.3); display:block; }
+  .hero-text p { font-size:.9rem; color:rgba(255,255,255,.7); line-height:1.7; font-weight:300; max-width:340px; }
+
+  .panel-stats { display:flex; gap:2rem; position:relative; z-index:1; }
+  .pstat-num { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:white; }
+  .pstat-label { font-size:.68rem; color:rgba(255,255,255,.5); font-family:'Space Mono',monospace; text-transform:uppercase; letter-spacing:.1em; }
+
+  /* Right panel (form) */
+  .right-panel {
+    background: var(--paper);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+  }
+  .form-wrap { width:100%; max-width:400px; }
+  .form-header { margin-bottom:2.5rem; }
+  .form-eyebrow { font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:.7rem; display:flex; align-items:center; gap:.5rem; }
+  .form-eyebrow::before { content:''; display:block; width:20px; height:1.5px; background:var(--accent); }
+  .form-header h2 { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; line-height:1; letter-spacing:.02em; }
+  .form-header p { font-size:.85rem; color:var(--muted); margin-top:.5rem; }
+
+  /* Tabs */
+  .form-tabs { display:flex; gap:0; margin-bottom:2rem; border:1.5px solid var(--border); border-radius:3px; overflow:hidden; }
+  .tab-btn { flex:1; padding:.6rem; font-family:'Space Mono',monospace; font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; background:transparent; color:var(--muted); border:none; cursor:none; transition:all .2s; }
+  .tab-btn.active { background:var(--ink); color:var(--paper); }
+
+  .form-group { margin-bottom:1.1rem; }
+  .form-group label { display:block; font-family:'Space Mono',monospace; font-size:.62rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.4rem; }
+  .form-group input, .form-group select {
+    width:100%; padding:.75rem 1rem;
+    background:var(--cream); border:1.5px solid var(--border);
+    color:var(--ink); font-family:'DM Sans',sans-serif; font-size:.9rem;
+    border-radius:2px; outline:none; transition:border-color .2s; cursor:none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color:var(--ink); }
+  .form-group input.error { border-color:var(--accent); }
+
+  .input-row { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+
+  .role-select-wrap { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin-bottom:1.1rem; }
+  .role-card {
+    border:1.5px solid var(--border); border-radius:3px; padding:1rem;
+    text-align:center; cursor:none; transition:all .2s; position:relative;
+  }
+  .role-card:hover { border-color:var(--ink); }
+  .role-card.selected { border-color:var(--accent); background:#fff0e8; }
+  .role-card input[type=radio] { position:absolute; opacity:0; }
+  .role-icon { font-size:1.5rem; margin-bottom:.4rem; }
+  .role-label { font-family:'Space Mono',monospace; font-size:.62rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); }
+  .role-card.selected .role-label { color:var(--accent); }
+
+  .form-footer { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; }
+  .form-footer a { font-size:.78rem; color:var(--muted); text-decoration:none; transition:color .2s; cursor:none; }
+  .form-footer a:hover { color:var(--accent); }
+  .remember { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:var(--muted); cursor:none; }
+  .remember input { cursor:none; accent-color:var(--accent); }
+
+  .btn-submit {
+    width:100%; padding:.9rem; background:var(--ink); color:var(--paper);
+    border:none; font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500;
+    letter-spacing:.08em; text-transform:uppercase; cursor:none; border-radius:2px;
+    transition:background .2s, transform .15s;
+  }
+  .btn-submit:hover { background:var(--accent); transform:translateY(-1px); }
+
+  .divider { display:flex; align-items:center; gap:1rem; margin:1.2rem 0; color:var(--muted); font-size:.75rem; font-family:'Space Mono',monospace; }
+  .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .alt-link { text-align:center; font-size:.82rem; color:var(--muted); }
+  .alt-link a { color:var(--ink); font-weight:500; text-decoration:none; border-bottom:1px solid var(--ink); cursor:none; }
+
+  /* Error / toast */
+  .error-msg { color:var(--accent); font-size:.75rem; font-family:'Space Mono',monospace; margin-top:.3rem; display:none; }
+  .toast { position:fixed; bottom:2rem; right:2rem; background:var(--ink); color:var(--paper); padding:.8rem 1.5rem; border-radius:3px; font-size:.82rem; z-index:999; transform:translateY(80px); opacity:0; transition:all .3s; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.error { background:var(--accent); }
+
+  /* Loading spinner */
+  .spinner { width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; vertical-align:middle; margin-right:.5rem; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Admin demo badge */
+  .demo-creds { background:var(--cream); border:1px dashed var(--border); border-radius:3px; padding:.8rem 1rem; margin-top:1rem; font-size:.75rem; }
+  .demo-creds strong { font-family:'Space Mono',monospace; font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.4rem; }
+  .demo-creds code { color:var(--accent); font-family:'Space Mono',monospace; }
+
+  /* Animate in */
+  .fade-in { animation: fadeIn .5s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  @media(max-width:768px) {
+    body { grid-template-columns:1fr; }
+    .left-panel { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Left branding panel -->
+<div class="left-panel">
+  <div class="brand">
+    <a href="#" class="logo">NEX<span>US</span></a>
+    <div class="brand-tagline">Campus Event Portal</div>
+  </div>
+  <div class="hero-text">
+    <h1>Your<br><em>Campus</em><br>Awaits</h1>
+    <p>One portal for every lecture, workshop, hackathon, and social experience across campus. Discover. Register. Connect.</p>
+  </div>
+  <div class="panel-stats">
+    <div><div class="pstat-num">24+</div><div class="pstat-label">Events / Month</div></div>
+    <div><div class="pstat-num">1.8K</div><div class="pstat-label">Students</div></div>
+    <div><div class="pstat-num">12</div><div class="pstat-label">Departments</div></div>
+  </div>
+</div>
+
+<!-- Right form panel -->
+<div class="right-panel">
+  <div class="form-wrap fade-in">
+    <div class="form-header">
+      <div class="form-eyebrow">Welcome Back</div>
+      <h2>Sign In to<br>Nexus</h2>
+      <p>Don't have an account? <a href="signup.html" style="color:var(--accent);font-weight:500;text-decoration:none;border-bottom:1px solid var(--accent)">Create one →</a></p>
+    </div>
+
+    <!-- Role selector -->
+    <div style="margin-bottom:1.1rem;">
+      <div style="font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;">Sign in as</div>
+      <div class="role-select-wrap">
+        <label class="role-card selected" id="roleStudent" onclick="selectRole('student')">
+          <input type="radio" name="role" value="student" checked>
+          <div class="role-icon">🎓</div>
+          <div class="role-label">Student</div>
+        </label>
+        <label class="role-card" id="roleAdmin" onclick="selectRole('admin')">
+          <input type="radio" name="role" value="admin">
+          <div class="role-icon">⚙️</div>
+          <div class="role-label">Admin</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="loginEmail" placeholder="you@university.edu">
+      <div class="error-msg" id="emailErr">Please enter a valid email.</div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+      <div class="error-msg" id="passErr">Password must be at least 6 characters.</div>
+    </div>
+
+    <div class="form-footer">
+      <label class="remember"><input type="checkbox" id="rememberMe"> Remember me</label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <button class="btn-submit" id="loginBtn" onclick="handleLogin()">Sign In →</button>
+
+    <div class="demo-creds" id="demoCreds">
+      <strong>Demo credentials</strong>
+      Student — <code>student@university.edu</code> / <code>student123</code><br>
+      Admin — <code>admin@university.edu</code> / <code>admin123</code>
+    </div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+    setTimeout(() => { ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px'; }, 60);
+  });
+
+  let selectedRole = 'student';
+  function selectRole(r) {
+    selectedRole = r;
+    document.getElementById('roleStudent').classList.toggle('selected', r === 'student');
+    document.getElementById('roleAdmin').classList.toggle('selected', r === 'admin');
+  }
+
+  function showToast(msg, type='success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPassword').value.trim();
+    let ok = true;
+
+    document.getElementById('emailErr').style.display = 'none';
+    document.getElementById('passErr').style.display  = 'none';
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('emailErr').style.display = 'block'; ok = false;
+    }
+    if (!pass || pass.length < 6) {
+      document.getElementById('passErr').style.display = 'block'; ok = false;
+    }
+    if (!ok) return;
+
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<span class="spinner"></span> Signing in...';
+    btn.disabled = true;
+
+    // Simulate auth (replace with real API call)
+    setTimeout(() => {
+      const result = Auth.login(email, pass, selectedRole);
+      if (result.success) {
+        showToast('Welcome back! Redirecting...');
+        setTimeout(() => {
+          window.location.href = result.role === 'admin' ? 'admin-dashboard.html' : 'user-dashboard.html';
+        }, 900);
+      } else {
+        showToast(result.error, 'error');
+        btn.innerHTML = 'Sign In →';
+        btn.disabled = false;
+      }
+    }, 800);
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+  // Redirect if already logged in
+  const session = Auth.getSession();
+  if (session) window.location.href = session.role === 'admin' ? 'admin-dashboard.html' : 'user-dashboard.html';
+</script>
+</body>
+</html>
